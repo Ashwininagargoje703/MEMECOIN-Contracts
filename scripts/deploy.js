@@ -12,7 +12,7 @@ async function main() {
   const factory = await Factory.deploy(
     200,
     100,
-    { gasPrice: ethers.utils.parseUnits("5", "gwei") }
+    { gasPrice: ethers.utils.parseUnits("50", "gwei") }
   );
 
   console.log("⛓ Tx hash:", factory.deployTransaction.hash);
