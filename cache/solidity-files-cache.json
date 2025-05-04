@@ -795,8 +795,8 @@
       ]
     },
     "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\contracts\\MemeCoinFactory.sol": {
-      "lastModificationDate": 1746115217557,
-      "contentHash": "c3d7ecb494f5e98ba92944f918cb6313",
+      "lastModificationDate": 1746273406436,
+      "contentHash": "32f46eaf9c88d2a318c01786add8f8bd",
       "sourceName": "contracts/MemeCoinFactory.sol",
       "solcConfig": {
         "version": "0.8.20",

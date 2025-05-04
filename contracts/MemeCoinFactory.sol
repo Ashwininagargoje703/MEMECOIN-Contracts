@@ -1,4 +1,3 @@
-// contracts/MemeCoinFactory.sol
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
@@ -7,8 +6,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";  // moved in OZ5
-import "@openzeppelin/contracts/utils/Pausable.sol";          // moved in OZ5
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 
 /// @title MemeCoinFactory: launchpad + fixed-price buy-only marketplace
 contract MemeCoinFactory is Ownable, ReentrancyGuard, Pausable {
@@ -17,17 +16,17 @@ contract MemeCoinFactory is Ownable, ReentrancyGuard, Pausable {
     struct TokenInfo {
         address token;
         address creator;
-        uint256 priceWei;    // price per whole token (atomic 1e18)
-        string  description; // human-readable blurb
-        string  ipfsHash;    // CID for JSON metadata
+        uint256 priceWei;
+        string description;
+        string ipfsHash;
     }
 
     TokenInfo[] public allTokens;
-    mapping(address => uint256) public tokenIndexPlusOne; // 0 = not launched
-    mapping(address => bool)    public tokenPaused;       // per-token pause flag
+    mapping(address => uint256) public tokenIndexPlusOne;
+    mapping(address => bool) public tokenPaused;
 
-    uint16 public platformFeeBP;  // e.g. 200 = 2%
-    uint16 public referralFeeBP;  // e.g. 100 = 1%
+    uint16 public platformFeeBP;
+    uint16 public referralFeeBP;
 
     error PriceZero();
     error NotLaunched();
@@ -60,12 +59,17 @@ contract MemeCoinFactory is Ownable, ReentrancyGuard, Pausable {
     event ETHRescued(address indexed to, uint256 amount);
     event TokenRescued(address indexed token, uint256 amount);
     event UnsoldReclaimed(address indexed token, uint256 amount);
+    /// @notice Emitted when a creator updates description or IPFS
+    event MetadataUpdated(
+        address indexed token,
+        string newDescription,
+        string newIpfsHash
+    );
 
-    /// @param _platformFeeBP basis points for platform (must + referral <10000)
-    /// @param _referralFeeBP basis points for referral
-    constructor(uint16 _platformFeeBP, uint16 _referralFeeBP)
-        Ownable(msg.sender)                    // <— pass deployer into OZ5’s Ownable
-    {
+    constructor(
+        uint16 _platformFeeBP,
+        uint16 _referralFeeBP
+    ) Ownable(msg.sender) {
         require(_platformFeeBP + _referralFeeBP < 10_000, "Fees too high");
         platformFeeBP = _platformFeeBP;
         referralFeeBP = _referralFeeBP;
@@ -73,7 +77,6 @@ contract MemeCoinFactory is Ownable, ReentrancyGuard, Pausable {
 
     // 1. Core Launch & Buy
 
-    /// @notice Deploys a new MemeCoin and registers it
     function createMemeCoin(
         string calldata name_,
         string calldata symbol_,
@@ -94,14 +97,25 @@ contract MemeCoinFactory is Ownable, ReentrancyGuard, Pausable {
         tokenAddress = address(token);
 
         allTokens.push(
-            TokenInfo(tokenAddress, msg.sender, priceWei_, description_, ipfsHash_)
+            TokenInfo(
+                tokenAddress,
+                msg.sender,
+                priceWei_,
+                description_,
+                ipfsHash_
+            )
         );
         tokenIndexPlusOne[tokenAddress] = allTokens.length;
 
-        emit TokenCreated(tokenAddress, msg.sender, priceWei_, description_, ipfsHash_);
+        emit TokenCreated(
+            tokenAddress,
+            msg.sender,
+            priceWei_,
+            description_,
+            ipfsHash_
+        );
     }
 
-    /// @notice Buys `amountAtomic` at fixed price; splits fees
     function buyToken(
         address token_,
         uint256 amountAtomic,
@@ -130,16 +144,23 @@ contract MemeCoinFactory is Ownable, ReentrancyGuard, Pausable {
         IERC20(token_).safeTransfer(msg.sender, amountAtomic);
 
         emit Bought(
-            token_, msg.sender, amountAtomic, cost,
-            referrer, platformShare, referralShare, creatorShare
+            token_,
+            msg.sender,
+            amountAtomic,
+            cost,
+            referrer,
+            platformShare,
+            referralShare,
+            creatorShare
         );
     }
 
     // 2. Read-only Views
 
-    function getTokens(uint256 start, uint256 count)
-        external view returns (TokenInfo[] memory page)
-    {
+    function getTokens(
+        uint256 start,
+        uint256 count
+    ) external view returns (TokenInfo[] memory page) {
         uint256 len = allTokens.length;
         uint256 end = start + count > len ? len : start + count;
         page = new TokenInfo[](end - start);
@@ -152,9 +173,11 @@ contract MemeCoinFactory is Ownable, ReentrancyGuard, Pausable {
         return allTokens.length;
     }
 
-    /// @notice Returns on-chain name/symbol + your stored metadata
-    function getTokenDetails(uint256 index)
-        external view
+    function getTokenDetails(
+        uint256 index
+    )
+        external
+        view
         returns (
             address token,
             string memory name_,
@@ -167,29 +190,95 @@ contract MemeCoinFactory is Ownable, ReentrancyGuard, Pausable {
     {
         require(index < allTokens.length, "Index out of bounds");
         TokenInfo storage info = allTokens[index];
-        token        = info.token;
-        name_        = IERC20Metadata(token).name();
-        symbol_      = IERC20Metadata(token).symbol();
+        token = info.token;
+        name_ = IERC20Metadata(token).name();
+        symbol_ = IERC20Metadata(token).symbol();
         description_ = info.description;
-        ipfsHash_    = info.ipfsHash;
-        priceWei_    = info.priceWei;
-        creator_     = info.creator;
+        ipfsHash_ = info.ipfsHash;
+        priceWei_ = info.priceWei;
+        creator_ = info.creator;
+    }
+
+    /// @notice Fetch metadata by token address
+    function getTokenDetailsByAddress(
+        address token_
+    )
+        external
+        view
+        returns (
+            address token,
+            string memory name_,
+            string memory symbol_,
+            string memory description_,
+            string memory ipfsHash_,
+            uint256 priceWei_,
+            address creator_
+        )
+    {
+        uint256 idxPlusOne = tokenIndexPlusOne[token_];
+        require(idxPlusOne != 0, "Not launched");
+        return this.getTokenDetails(idxPlusOne - 1);
+    }
+
+    /// @notice Read the sale price by token address
+    function priceOf(address token_) external view returns (uint256) {
+        uint256 idx = tokenIndexPlusOne[token_];
+        require(idx != 0, "Not launched");
+        return allTokens[idx - 1].priceWei;
+    }
+
+    /// @notice Lookup a token’s array index
+    function getTokenIndex(address token_) external view returns (uint256) {
+        uint256 idx = tokenIndexPlusOne[token_];
+        require(idx != 0, "Not launched");
+        return idx - 1;
+    }
+
+    /// @notice List all tokens created by a specific address
+    function getTokensByCreator(
+        address creator_
+    ) external view returns (TokenInfo[] memory) {
+        uint256 total = allTokens.length;
+        uint256 count;
+        for (uint256 i = 0; i < total; i++) {
+            if (allTokens[i].creator == creator_) count++;
+        }
+        TokenInfo[] memory list = new TokenInfo[](count);
+        uint256 j;
+        for (uint256 i = 0; i < total; i++) {
+            if (allTokens[i].creator == creator_) {
+                list[j++] = allTokens[i];
+            }
+        }
+        return list;
+    }
+
+    /// @notice How many tokens remain unsold (held by factory)
+    function unsoldSupply(address token_) external view returns (uint256) {
+        return IERC20(token_).balanceOf(address(this));
     }
 
     // 3. Creator Dashboard
 
-    function updatePrice(address token_, uint256 newPriceWei) external whenNotPaused {
+    function updatePrice(
+        address token_,
+        uint256 newPriceWei
+    ) external whenNotPaused {
         if (newPriceWei == 0) revert PriceZero();
         uint256 idx = tokenIndexPlusOne[token_];
         if (idx == 0) revert NotLaunched();
         TokenInfo storage info = allTokens[idx - 1];
-        if (msg.sender != info.creator && msg.sender != owner()) revert NotAuthorized();
+        if (msg.sender != info.creator && msg.sender != owner())
+            revert NotAuthorized();
 
         info.priceWei = newPriceWei;
         emit PriceUpdated(token_, newPriceWei);
     }
 
-    function reclaimUnsold(address token_, uint256 amount) external nonReentrant {
+    function reclaimUnsold(
+        address token_,
+        uint256 amount
+    ) external nonReentrant {
         uint256 idx = tokenIndexPlusOne[token_];
         if (idx == 0) revert NotLaunched();
         TokenInfo storage info = allTokens[idx - 1];
@@ -199,8 +288,31 @@ contract MemeCoinFactory is Ownable, ReentrancyGuard, Pausable {
         emit UnsoldReclaimed(token_, amount);
     }
 
-    function pauseToken(address token_)   external onlyOwner { tokenPaused[token_] = true;  emit TokenPausedEvent(token_); }
-    function unpauseToken(address token_) external onlyOwner { tokenPaused[token_] = false; emit TokenUnpausedEvent(token_); }
+    /// @notice Allow creators to update their token metadata
+    function updateMetadata(
+        address token_,
+        string calldata newDescription,
+        string calldata newIpfsHash
+    ) external {
+        uint256 idx = tokenIndexPlusOne[token_];
+        require(idx != 0, "Not launched");
+        TokenInfo storage info = allTokens[idx - 1];
+        require(msg.sender == info.creator, "Not creator");
+
+        info.description = newDescription;
+        info.ipfsHash = newIpfsHash;
+        emit MetadataUpdated(token_, newDescription, newIpfsHash);
+    }
+
+    function pauseToken(address token_) external onlyOwner {
+        tokenPaused[token_] = true;
+        emit TokenPausedEvent(token_);
+    }
+
+    function unpauseToken(address token_) external onlyOwner {
+        tokenPaused[token_] = false;
+        emit TokenUnpausedEvent(token_);
+    }
 
     // 4. Admin / Treasury Panel
 
@@ -222,9 +334,19 @@ contract MemeCoinFactory is Ownable, ReentrancyGuard, Pausable {
         emit TokenRescued(token_, amount);
     }
 
-    function pause()   external onlyOwner { _pause();   }
-    function unpause() external onlyOwner { _unpause(); }
+    function pause() external onlyOwner {
+        _pause();
+    }
 
-    receive() external payable { revert("Use buyToken"); }
-    fallback() external payable { revert("Use buyToken"); }
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+
+    receive() external payable {
+        revert("Use buyToken");
+    }
+
+    fallback() external payable {
+        revert("Use buyToken");
+    }
 }

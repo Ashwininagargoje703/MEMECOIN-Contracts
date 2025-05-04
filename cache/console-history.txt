@@ -1,0 +1,102 @@
+);
+  }
+    gasPrice: ethers.utils.parseUnits("5", "gwei")
+    value: totalCost,
+  {
+thers.constants.AddressZero,
+  e
+  amount,
+const txBuy =   tokenAddr,
+// 4) Send the buyToken transaction
+"Total cost (ETH):", ethers.utils.formatEther(totalCost));
+const totalCost = pricePer.mul(amount).div(etconsole.log(
+// 3) Compute total ETH cost: pricePer * amount / 1e18
+const pricePer = await FACTORY.priceOf(tokenAddr);
+// 2) Fetch the per‑token price (in wei per 1 LTK)
+const
+// 1) Define how many tokens to buy (10 LTK)
+console.log("Post‑buy LTK balance:", (await LTK.balanceOf(deployer.address)).toString());
+console.log("✅ buyToken mined");
+await txBuy.wait();
+);
+ice: ethers.utils.parseUnits("5", "gwei") }
+  ethers.  { value: totalCost, gasPr
+  amount,
+  tokenAddr,
+const txBuy = await FACTORY.buyToken(
+const pricePer  = await FACTORY.priceOf(tokenAdconst totalCost = pricePer.mul(amount).div(ethers.constants.WeiPerEther);
+const amount    = ethers.utils.parseUnits("10", 18);
+console.log("Pre‑buy LTK balance:", (await LTK.balanceOf(deployer.address)).toString());
+const LTK = await ethers.getContractAt("IERC20", tokenAddr, deployer);
+console.log("Token address:", tokenAddr);
+const [tokenAddr] = await FACTORY.getTokenDetails(0);
+console.log("Pre‑buy LTK bala
+const LTK = await ethers.getContractAt("IERC20", tokenAddr, deployer);
+console.log("Token address:", tokenAddr);
+const [tokenAddr] = await FACTORY.getTokenDetails(0);
+(await FACTORY.totalTokens()).toString();
+await txCreate.wait()console.log("✅ createMemeCoin mined");
+);
+  "QmLocalCID"
+  ethers.utils.parseUnits("0.005", 18), // price = 0.005 ETH
+  ethers.utils.parseUnits("1000", 18),  // 1,000 supply
+  "Local test token",
+  "LTK",
+  "LocalToken",
+const txCreate = await FACTORY.createMemeCoin(
+(await FACTORY.totalTokens()).toString();
+);
+  deployer
+  "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  "MemeCoinFactory",
+const FACTORY = await ethers.getContractAt(
+const [deployer] = await ethers.getSigners();
+npx hardhat console --network localhost
+);
+  (await LTK.balanceOf(deployer.address)).toString()
+  "Post‑buy LTK balance:",
+// 9. Check your balance again (shouldconsole.log(
+console.log("✅ buyToken mined");
+await txBuy.wait();
+);
+  { value: totalCost, gasPrice: ethers.utils.parseUnits("5", "gwei") }
+  ethers.constants.AddressZero,
+  amount,
+  tokenAddr,
+const txBuy = await FACTORY.buyToken(
+const totalCost = pricePer.mul(amount).div(ethers.utils.parseUnits("1", 18));
+const pricePer  = await FACTORY.priceOf(tokenAddr); 
+const amount    = ethers.utils.parseUnits("10", 18);
+// 8. Buy 10 LTK
+console.log("Pre‑buy LTK balance:", (await LTK.balanceOf(deployer.address)).toString());
+const LTK = await ethers.getContractAt("IERC20", tokenAddr, deployer);
+// 7. Check your balance (should be 0)
+const [console.log("Token address:", tokenAddr);
+// 6. Read back its address
+(await FACTORY.totalTokens()).toString();
+// 5. Confirm there is now 1 token
+console.log("✅ createMemeCoin mined");
+await txCreate.wait();
+);
+  "QmLocalCID"
+token
+  ethers.utils.parseUnits("0.005", 18), // 0.005 ETH per 
+  ethers.utils.parseUnits("1000", 18),  // 1,000 supply
+  "Local test token",
+  "LTK",
+const t  "LocalToken",
+// 4. Mint a new token (LocalToken, symbol LTK)
+(await FACTORY.totalTokens()).toString();
+// 3. Verify no tokens exist yet
+);
+  deployer
+ecb367f032d93F642f64180aa3",  // your factory address
+  "0x5FbDB2315678af
+const FACTORY = await ethers.getCo  "MemeCoinFactory",
+eployed factory
+// 2. Attach to your locally‐d
+const [deployer] = await ethers
+// 1. Load your signer
+const [deployer] = await ethers.getSigners();
+0x5FbDB2315678afecb367f032d93F642f64180aa3
+0x5FbDB2315678afecb367f032d93F642f64180aa3)
