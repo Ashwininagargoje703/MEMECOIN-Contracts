@@ -21,7 +21,9 @@ module.exports = {
     },
     sepolia: {
       url: process.env.TESTNET_URL || "",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : []
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      allowUnlimitedContractSize: true
+
     },
     mainnet: {
       url: process.env.MAINNET_URL || "",

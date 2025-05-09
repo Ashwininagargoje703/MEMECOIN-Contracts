@@ -1,0 +1,15 @@
+await tx.wait();
+);
+  "QmYourIpfsHash"
+  ethers.utils.parseEther("0.01"),
+  ethers.utils.parseEther("1000"),
+  "Test token",
+  "MTK",
+  "MyTest",
+const tx = await factory.createMemeCoin(
+// 2. Call createMemeCoin(...) with your desired params:
+);
+3F3A99897C0c75352980E824233f686F4b29884"
+  "0x7
+const factory = await  "MemeCoinFactory",
+// 1. Attach to your factory
