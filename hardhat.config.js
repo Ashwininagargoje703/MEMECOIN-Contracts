@@ -1,41 +1,34 @@
+// hardhat.config.js
 require("@nomiclabs/hardhat-ethers");
 require("@nomiclabs/hardhat-etherscan");
 require("dotenv").config();
 
-const {
-  PRIVATE_KEY,
-  TESTNET_URL,
-  MAINNET_URL,
-  LOCALHOST_URL,
-  ETHERSCAN_API_KEY
-} = process.env;
-
 module.exports = {
   solidity: {
     version: "0.8.20",
-    settings: { optimizer: { enabled: true, runs: 200 } }
+    settings: {
+      optimizer: { enabled: true, runs: 1 }
+    }
   },
   networks: {
+    hardhat: {
+      allowUnlimitedContractSize: true
+    },
     localhost: {
-      url: LOCALHOST_URL || "http://127.0.0.1:8545",
+      url: process.env.LOCALHOST_URL || "http://127.0.0.1:8545",
+      // if you run `npx hardhat node` and then deploy with --network localhost
+      allowUnlimitedContractSize: true
     },
     sepolia: {
-      url: TESTNET_URL || "",
-      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
-
+      url: process.env.TESTNET_URL || "",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : []
     },
-    
     mainnet: {
-      url: MAINNET_URL || "",
-      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
-      // You can set mainnet-specific gas settings here too
-      // gasPrice: 50_000_000_000, // 50 gwei
+      url: process.env.MAINNET_URL || "",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : []
     }
   },
   etherscan: {
-    apiKey: ETHERSCAN_API_KEY || ""
-  },
-  mocha: {
-    timeout: 200000
+    apiKey: process.env.ETHERSCAN_API_KEY || ""
   }
 };

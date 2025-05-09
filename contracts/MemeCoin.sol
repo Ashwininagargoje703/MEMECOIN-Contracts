@@ -14,11 +14,11 @@ contract MemeCoin is ERC20Permit, Ownable {
     error EmptyNameOrSymbol();
     error ZeroSupply();
 
-    /// @param name_       Token name (min 3 chars)
-    /// @param symbol_     Token symbol (min 3 chars)
+    /// @param name_        Token name (min 3 chars)
+    /// @param symbol_      Token symbol (min 3 chars)
     /// @param totalSupply_ Mint amount in atomic units (18 decimals)
-    /// @param creator_    Address to receive ownership
-    /// @param ipfsHash_   CID for metadata JSON
+    /// @param creator_     Address to receive ownership
+    /// @param ipfsHash_    CID for metadata JSON
     constructor(
         string memory name_,
         string memory symbol_,
@@ -28,7 +28,6 @@ contract MemeCoin is ERC20Permit, Ownable {
     )
         ERC20(name_, symbol_)
         ERC20Permit(name_)
-        Ownable(msg.sender)                // <— pass msg.sender into OZ5’s Ownable
     {
         if (creator_ == address(0)) revert ZeroAddress();
         if (bytes(name_).length < 3 || bytes(symbol_).length < 3)
