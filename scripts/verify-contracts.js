@@ -12,7 +12,7 @@
 const hre = require("hardhat");
 
 // Replace with your deployed MemeCoinFactory address:
-const FACTORY_ADDRESS = "0xdb9719307A8a6c62EDCc4e11BAA08785a36c8C3C";
+const FACTORY_ADDRESS = "0x73F3A99897C0c75352980E824233f686F4b29884";
 
 async function main() {
   console.log(`Verifying ${FACTORY_ADDRESS} (MemeCoinFactory)...`);
