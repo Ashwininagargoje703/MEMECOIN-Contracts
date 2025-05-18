@@ -1,44 +1,29 @@
-// scripts/deploy-dex-helper.js
+// scripts/set-dex-helper.js
 require("dotenv").config();
-const { ethers, run, network } = require("hardhat");
+const { ethers, network } = require("hardhat");
 
 async function main() {
-  const [deployer] = await ethers.getSigners();
+  const [caller] = await ethers.getSigners();
+
   const factoryAddress = process.env.FACTORY_ADDRESS;
-  if (!factoryAddress) {
-    console.error("❌ Please set FACTORY_ADDRESS in your .env");
+  const helperAddress  = process.env.DEX_HELPER_ADDRESS;
+  if (!factoryAddress || !helperAddress) {
+    console.error("❌ Please set FACTORY_ADDRESS and DEX_HELPER_ADDRESS in your .env");
     process.exit(1);
   }
 
-  console.log(`\nDeploying MemeCoinDEXHelper on ${network.name}`);
-  console.log("Factory is:", factoryAddress);
+  console.log(`\nSetting V3 helper on factory ${factoryAddress} → ${helperAddress}`);
+  console.log(`Caller: ${caller.address} on ${network.name}\n`);
 
-  const Helper = await ethers.getContractFactory("MemeCoinDEXHelper");
-  const helper = await Helper.deploy(factoryAddress);
-  await helper.deployed();
-  console.log("✅ MemeCoinDEXHelper deployed at:", helper.address);
+  const Factory = await ethers.getContractFactory("MemeCoinFactory");
+  const factory = Factory.attach(factoryAddress);
 
-  // Auto‐verify on Etherscan (skip localhost)
-  if (network.name !== "localhost" && process.env.ETHERSCAN_API_KEY) {
-    console.log("🔍 Verifying helper on Etherscan…");
-    try {
-      await run("verify:verify", {
-        address: helper.address,
-        constructorArguments: [factoryAddress],
-      });
-      console.log("✅ Helper verified");
-    } catch (err) {
-      console.warn("⚠️ Helper verification failed:", err.message);
-    }
-  }
-
-  console.log(`
-  • Now call \`setDexHelper(${helper.address})\` on your factory:
-      npx hardhat run scripts/set-dex-helper.js --network ${network.name}
-`);
+  const tx = await factory.setV3Helper(helperAddress);
+  await tx.wait();
+  console.log("✅ Dex helper set successfully!");
 }
 
-main().catch((e) => {
-  console.error(e);
+main().catch(err => {
+  console.error(err);
   process.exit(1);
 });

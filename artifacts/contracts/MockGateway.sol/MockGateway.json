@@ -1,0 +1,44 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "MockGateway",
+  "sourceName": "contracts/MockGateway.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        },
+        {
+          "internalType": "bytes",
+          "name": "",
+          "type": "bytes"
+        },
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "callContractWithToken",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x608080604052346100155760e3908161001b8239f35b600080fdfe6080604052600480361015601257600080fd5b600090813560e01c63b541708414602857600080fd5b3460a25760a036600319011260a25767ffffffffffffffff908035828111609e576054903690830160a6565b5050602435828111609e57606a903690830160a6565b5050604435828111609e576080903690830160a6565b5050606435918211609a5760959136910160a6565b505080f35b8280fd5b8380fd5b5080fd5b9181601f8401121560d15782359167ffffffffffffffff831160d1576020838186019501011160d157565b600080fdfea164736f6c6343000814000a",
+  "deployedBytecode": "0x6080604052600480361015601257600080fd5b600090813560e01c63b541708414602857600080fd5b3460a25760a036600319011260a25767ffffffffffffffff908035828111609e576054903690830160a6565b5050602435828111609e57606a903690830160a6565b5050604435828111609e576080903690830160a6565b5050606435918211609a5760959136910160a6565b505080f35b8280fd5b8380fd5b5080fd5b9181601f8401121560d15782359167ffffffffffffffff831160d1576020838186019501011160d157565b600080fdfea164736f6c6343000814000a",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

@@ -1,0 +1,54 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "MockGasService",
+  "sourceName": "contracts/MockGasService.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        },
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        },
+        {
+          "internalType": "bytes",
+          "name": "",
+          "type": "bytes"
+        },
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "payNativeGasForContractCallWithToken",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x6080806040523461001657610103908161001c8239f35b600080fdfe6080604052600480361015601257600080fd5b600090813560e01c63c62c200214602857600080fd5b60e036600319011260c2576001600160a01b039080358281160360be5767ffffffffffffffff9060243582811160ba576063903690830160c6565b505060443582811160ba576079903690830160c6565b505060643582811160ba57608f903690830160c6565b505060843591821160b65760a49136910160c6565b505060c4359081160360b35780f35b80fd5b8380fd5b8480fd5b8280fd5b5080fd5b9181601f8401121560f15782359167ffffffffffffffff831160f1576020838186019501011160f157565b600080fdfea164736f6c6343000814000a",
+  "deployedBytecode": "0x6080604052600480361015601257600080fd5b600090813560e01c63c62c200214602857600080fd5b60e036600319011260c2576001600160a01b039080358281160360be5767ffffffffffffffff9060243582811160ba576063903690830160c6565b505060443582811160ba576079903690830160c6565b505060643582811160ba57608f903690830160c6565b505060843591821160b65760a49136910160c6565b505060c4359081160360b35780f35b80fd5b8380fd5b8480fd5b8280fd5b5080fd5b9181601f8401121560f15782359167ffffffffffffffff831160f1576020838186019501011160f157565b600080fdfea164736f6c6343000814000a",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

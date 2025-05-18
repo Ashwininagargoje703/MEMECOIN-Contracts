@@ -1,36 +1,37 @@
-#!/usr/bin/env node
-
-/**
- * Script to verify the MemeCoinFactory contract on Etherscan (Sepolia) using Hardhat.
- *
- * Usage:
- *   npx hardhat run scripts/verify-contracts.js --network sepolia
- *
- * Update the `address` field below with your deployed contract address.
- */
-
+// scripts/verify-contracts.js
+require("dotenv").config();
 const hre = require("hardhat");
 
-// Replace with your deployed MemeCoinFactory address:
-const FACTORY_ADDRESS = "0x73F3A99897C0c75352980E824233f686F4b29884";
-
 async function main() {
-  console.log(`Verifying ${FACTORY_ADDRESS} (MemeCoinFactory)...`);
-  try {
-    await hre.run("verify:verify", {
-      address: FACTORY_ADDRESS,
-      contract: "contracts/MemeCoinFactory.sol:MemeCoinFactory",
-      constructorArguments: [200, 100]
-    });
-    console.log(`✅ Successfully verified ${FACTORY_ADDRESS}`);
-  } catch (error) {
-    console.error(`❌ Failed to verify ${FACTORY_ADDRESS}:`, error.message);
+  // Load addresses from .env
+  const vestingAddr   = process.env.VESTING_MANAGER_ADDRESS;
+  const dexHelperAddr = process.env.DEX_HELPER_ADDRESS;
+
+  if (!vestingAddr || !dexHelperAddr) {
+    throw new Error("Please set VESTING_MANAGER_ADDRESS and DEX_HELPER_ADDRESS in .env");
+  }
+
+  const { network, ethers } = hre;
+  const provider = ethers.provider;
+
+  console.log(`Verifying contracts on "${network.name}" network`);
+
+  for (const [label, addr] of [
+    ["Vesting Manager", vestingAddr],
+    ["DEX Helper",      dexHelperAddr],
+  ]) {
+    const code = await provider.getCode(addr);
+    if (code && code !== "0x") {
+      console.log(`✅ ${label} at ${addr} is deployed (bytecode size ${ (code.length - 2) / 2 } bytes)`);
+    } else {
+      console.log(`❌ ${label} at ${addr} is NOT deployed`);
+    }
   }
 }
 
 main()
   .then(() => process.exit(0))
-  .catch((error) => {
-    console.error(error);
+  .catch(err => {
+    console.error(err);
     process.exit(1);
   });
