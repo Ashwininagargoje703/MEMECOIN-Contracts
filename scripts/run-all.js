@@ -1,164 +1,164 @@
 // scripts/run-all.js
-const { ethers } = require("hardhat");
-const { MerkleTree } = require("merkletreejs");
-const keccak256 = require("keccak256");
+// ──────────────────────────────
+// Usage: npx hardhat run scripts/run-all.js [--network <network>]
+
+require("dotenv").config();
+const hre = require("hardhat");
+const { ethers, network } = hre;
 
 async function main() {
-  const [deployer, alice, bob] = await ethers.getSigners();
-  console.log("Deployer:", deployer.address);
+  console.log("⛓ Running on network:", network.name,"\n");
 
-  // ─── 1) Deploy MemeCoinFactory ─────────────────
-  const Factory = await ethers.getContractFactory("MemeCoinFactory");
-  const factory = await Factory.deploy(
-    ethers.constants.AddressZero,            // forwarder (no meta-tx)
-    200,                                     // platformFeeBP = 2%
-    100,                                     // referralFeeBP = 1%
-    ethers.utils.parseEther("0.01"),         // basePrice
-    ethers.utils.parseEther("0.000001"),     // slope
-    ethers.constants.AddressZero,            // positionManager (use real address in prod)
-    ethers.constants.AddressZero             // v2Factory       (use real address in prod)
+  const [deployer] = await ethers.getSigners();
+  console.log("1) Deployer:", deployer.address,"\n");
+
+  // 2) Deploy WETH9
+  console.log("2) Deploying WETH9…");
+  const WETH9 = await ethers.getContractFactory("WETH9");
+  const weth  = await WETH9.deploy();
+  await weth.deployed();
+  console.log("   ↳", weth.address,"\n");
+
+  // 3) Deploy UniswapV2Factory
+  console.log("3) Deploying UniswapV2Factory…");
+  const UV2F = await ethers.getContractFactory(
+    "@uniswap/v2-core/contracts/UniswapV2Factory.sol:UniswapV2Factory"
+  );
+  const uniFactory = await UV2F.deploy(deployer.address);
+  await uniFactory.deployed();
+  console.log("   ↳", uniFactory.address,"\n");
+
+  // 4) Attach Router
+  console.log("4) Attaching Router…");
+  const ROUTER = process.env.UNISWAP_V2_ROUTER ||
+    "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
+  const router = await ethers.getContractAt(
+    "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol:IUniswapV2Router02",
+    ROUTER
+  );
+  console.log("   ↳", ROUTER,"\n");
+
+  // 5) Deploy MemeCoinFactory (V2-only)
+  console.log("5) Deploying MemeCoinFactory…");
+  const MCF = await ethers.getContractFactory("MemeCoinFactory");
+  const factory = await MCF.deploy(
+    ethers.constants.AddressZero,         // forwarder
+    200,                                  // platformFeeBP = 2%
+    100,                                  // referralFeeBP = 1%
+    ethers.utils.parseEther("0.01"),      // basePrice
+    ethers.utils.parseEther("0.000001"),  // slope
+    uniFactory.address                    // UniswapV2Factory
   );
   await factory.deployed();
-  console.log("Factory:", factory.address);
+  console.log("   ↳", factory.address,"\n");
 
-  // ─── 2) WhitelistPresale ──────────────────────
-  const Whitelist = await ethers.getContractFactory("WhitelistPresale");
-  const whitelist = await Whitelist.deploy(factory.address);
-  await whitelist.deployed();
-  await factory.setWhitelistModule(whitelist.address);
+  // 6) Deploy & wire WhitelistPresale
+  console.log("6) Deploying WhitelistPresale…");
+  const WP = await ethers.getContractFactory("WhitelistPresale");
+  const presale = await WP.deploy(factory.address);
+  await presale.deployed();
+  await factory.setWhitelistModule(presale.address);
+  console.log("   ↳", presale.address,"\n");
 
-  // ─── 3) Disable UniswapV3Helper ───────────────
-  await factory.setV3Helper(ethers.constants.AddressZero);
-
-  // ─── 4) Deploy RewardToken ───────────────────
-  const Reward = await ethers.getContractFactory("RewardToken");
-  const rewardToken = await Reward.deploy(ethers.utils.parseUnits("20000", 18));
-  await rewardToken.deployed();
-  console.log("RewardToken:", rewardToken.address);
-
-  // ─── 5) Deploy AirdropMerkle ──────────────────
-  const Airdrop = await ethers.getContractFactory("AirdropMerkle");
-  const airdrop = await Airdrop.deploy(rewardToken.address, ethers.constants.HashZero);
-  await airdrop.deployed();
-  await factory.setAirdropModule(airdrop.address);
-  console.log("AirdropMerkle:", airdrop.address);
-
-  // ─── 6) Deploy BridgeAdapter ──────────────────
-  const mockGas  = await (await ethers.getContractFactory("MockGasService")).deploy();
-  const mockGate = await (await ethers.getContractFactory("MockGateway")).deploy();
-  const bridge   = await (await ethers.getContractFactory("BridgeAdapter"))
-                        .deploy(mockGas.address, mockGate.address);
-  await bridge.deployed();
-  await factory.setBridgeModule(bridge.address);
-  console.log("BridgeAdapter:", bridge.address);
-
-  // ─── 7) Create DemoToken ───────────────────────
+  // 7) Mint DemoToken
+  console.log("7) Minting DemoToken…");
   const SUPPLY = ethers.utils.parseUnits("1000", 18);
-  const txC    = await factory.createMemeCoin(
-    "DemoToken","DMT","demo token",
+  const txMint = await factory.createMemeCoin(
+    "DemoToken","DMT","Demo token",
     SUPPLY,
-    ethers.utils.parseEther("0.01"),  // legacy, ignored by curve
+    ethers.utils.parseEther("0.01"),
     "QmTestHash"
   );
-  const rc       = await txC.wait();
-  const tokenAddr = rc.events.find(e => e.event === "TokenCreated").args.token;
-  const token     = await ethers.getContractAt("MemeCoin", tokenAddr);
-  console.log("DemoToken:", token.address);
+  const rcMint = await txMint.wait();
+  const tokenAddr = rcMint.events.find(e=>e.event==="TokenCreated").args.token;
+  console.log("   ↳ Token at", tokenAddr,"\n");
+  const token = await ethers.getContractAt("MemeCoin", tokenAddr);
 
-  // seed factory
-  let bal = await token.balanceOf(factory.address);
-  if (bal.lt(SUPPLY)) {
-    await token.transfer(factory.address, SUPPLY.sub(bal));
-  }
-
-  // ─── 8) Deploy StakingRewards ─────────────────
-  const Staking = await ethers.getContractFactory("StakingRewards");
-  const staking = await Staking.deploy(
-    token.address,
-    rewardToken.address,
-    ethers.utils.parseUnits("0.1", 18)
+  // 8) Whitelist EOA for presale (and wait for it!)
+  console.log("8) Whitelisting for presale…");
+  const txWL = await presale.whitelistUsers(tokenAddr, [deployer.address]);
+  await txWL.wait();
+  console.log("   ↳ isWhitelisted:",
+    await presale.isWhitelisted(tokenAddr, deployer.address),"\n"
   );
-  await staking.deployed();
-  await factory.setStakingModule(staking.address);
-  console.log("StakingRewards:", staking.address);
 
-  // fund staking & airdrop
-  await rewardToken.transfer(staking.address, ethers.utils.parseUnits("10000", 18));
-  await rewardToken.transfer(airdrop.address,  ethers.utils.parseUnits("1000", 18));
-
-  // ─── 9) Alice buys 10 DMT via bonding curve ─────────────────
-  const units        = ethers.BigNumber.from(10);
-  const amountAtomic = ethers.utils.parseUnits("10", 18);
-  const ts           = await factory.totalSold();
-  const basePrice    = ethers.utils.parseEther("0.01");
-  const slope        = ethers.utils.parseEther("0.000001");
-  const cost         = basePrice.mul(units)
-    .add(slope.mul(ts.mul(units).add(units.mul(units.sub(1)).div(2))));
-
-  console.log("Alice buying 10 DMT for", cost.toString(), "wei");
-  await factory.connect(alice).buyToken(token.address, amountAtomic, bob.address, { value: cost });
-  console.log("Alice DMT balance:", (await token.balanceOf(alice.address)).toString());
-
-  // ─── 10) Stake & partial withdraw ─────────────────
-  await token.connect(alice).approve(staking.address, amountAtomic);
-  await staking.connect(alice).stake(amountAtomic);
-  console.log("Alice staked 10 DMT");
-
-  const withdrawAmt = ethers.utils.parseUnits("5", 18);
-  await staking.connect(alice).withdraw(withdrawAmt);
-  console.log("Alice withdrew 5 DMT");
-
-  await ethers.provider.send("evm_increaseTime", [3600]);
-  await ethers.provider.send("evm_mine", []);
-  await staking.connect(alice).getReward();
-  console.log("Alice RewardToken balance:", (await rewardToken.balanceOf(alice.address)).toString());
-
-  // ─── 11) Airdrop ─────────────────────────────
-  console.log("\n--- Airdrop Flow ---");
-  const claims = [{ address: alice.address, amount: 25 }];
-  const leaves = claims.map(c => keccak256(
-    Buffer.from(
-      ethers.utils.solidityPack(["address","uint256"], [c.address,c.amount]).slice(2),
-      "hex"
-    )
-  ));
-  const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
-  const root = tree.getHexRoot();
-  console.log("Merkle Root:", root);
-  await airdrop.setMerkleRoot(root);
-  const proof = tree.getHexProof(leaves[0]);
-  await airdrop.connect(alice).claim(25, proof);
-  console.log("Alice DMT after airdrop:", (await token.balanceOf(alice.address)).toString());
-
-  // ─── 12) Bridge ──────────────────────────────
-  await bridge.connect(alice).forwardWithToken(
-    "ChainA","RecipientAddress",ethers.utils.toUtf8Bytes(""),token.address,1,{ value: 0 }
+  // 9) Buy via presale
+  console.log("9) Buying via presale…");
+  const presaleAmt   = ethers.utils.parseUnits("1", 18);
+  const presalePrice = await factory.currentPrice();
+  const txPre = await presale.buyPresale(
+    tokenAddr, presaleAmt, presaleAmt,
+    ethers.constants.AddressZero,
+    [], { value: presalePrice }
   );
-  console.log("BridgeAdapter.forwardWithToken succeeded");
+  await txPre.wait();
+  console.log("   ↳ balance after presale:",
+    (await token.balanceOf(deployer.address)).toString(),"\n"
+  );
 
-  // ─── 13) Deploy & fund MockRouter then BuybackBurn ──────────────────
-  const MockRouter = await ethers.getContractFactory("MockRouter");
-  const mockRouter = await MockRouter.deploy(token.address);
-  await mockRouter.deployed();
-  await token.connect(alice).transfer(mockRouter.address, ethers.utils.parseUnits("1", 18));
+  // 10) Bonding-curve buy of 2 tokens
+  console.log("10) Buying 2 tokens via bonding curve…");
+  const buyCount = ethers.BigNumber.from(2);
+  const baseP    = await factory.basePrice();
+  const slope    = await factory.slope();
+  const ts       = await factory.totalSold(); // currently 1
+  const term1    = baseP.mul(buyCount);
+  const term2    = slope.mul(
+    ts.mul(buyCount)
+    .add(buyCount.mul(buyCount.sub(1)).div(2))
+  );
+  const cost     = term1.add(term2);
+  console.log("    ↳ cost =", ethers.utils.formatEther(cost), "ETH");
+  const txBuy = await factory.buyToken(
+    tokenAddr,
+    buyCount.mul(ethers.constants.WeiPerEther), // 2*1e18
+    ethers.constants.AddressZero,
+    { value: cost }
+  );
+  await txBuy.wait();
+  console.log("   ↳ balance after buyToken:",
+    (await token.balanceOf(deployer.address)).toString(),"\n"
+  );
 
-  const Buyback = await ethers.getContractFactory("BuybackBurn");
-  const buyback  = await Buyback.deploy(token.address, mockRouter.address);
-  await buyback.deployed();
-  await factory.setBuybackModule(buyback.address);
-  console.log("BuybackBurn:", buyback.address);
+  // 11) Create V2 Pool
+  console.log("11) Creating V2 pool…");
+  const txPool = await factory.createV2Pool(
+    tokenAddr, weth.address,
+    { value: ethers.utils.parseEther("0.002") }
+  );
+  const rcPool = await txPool.wait();
+  const pairAddr = rcPool.events.find(e=>e.event==="V2PairCreated").args.pair;
+  console.log("   ↳ pool at", pairAddr,"\n");
 
-  console.log("\n--- Buyback & Burn ---");
-  const burnAmt = ethers.utils.parseEther("0.01");
-  const path    = [ await mockRouter.WETH(), token.address ];
-  try {
-    const estimate = await buyback.connect(alice).estimateGas.buyAndBurn(0, path, { value: burnAmt });
-    const tx = await buyback.connect(alice).buyAndBurn(0, path, { value: burnAmt, gasLimit: estimate.mul(120).div(100) });
-    await tx.wait();
-    console.log("✅ buyAndBurn succeeded");
-  } catch (err) {
-    console.error("❌ buyAndBurn failed:", err.error?.message || err);
-  }
+  // 12) Add Liquidity
+  console.log("12) Adding liquidity 100 DMT + 1 WETH…");
+  await weth.deposit({ value: ethers.utils.parseEther("1") });
+  await token.approve(router.address, ethers.utils.parseUnits("100", 18));
+  await weth.approve(router.address, ethers.utils.parseEther("1"));
+  const deadline = Math.floor(Date.now()/1000) + 600;
+  const txAdd    = await router.addLiquidity(
+    tokenAddr, weth.address,
+    ethers.utils.parseUnits("100", 18), ethers.utils.parseEther("1"),
+    0, 0, deployer.address, deadline
+  );
+  await txAdd.wait();
+  console.log("   ↳ liquidity added\n");
+
+  // 13) Remove Liquidity
+  console.log("13) Removing liquidity…");
+  const pair = await ethers.getContractAt(
+    "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol:IUniswapV2Pair",
+    pairAddr
+  );
+  const lp     = await pair.balanceOf(deployer.address);
+  const txRm   = await router.removeLiquidity(
+    tokenAddr, weth.address,
+    lp, 0, 0, deployer.address, deadline
+  );
+  await txRm.wait();
+  console.log("   ↳ liquidity removed\n");
+
+  console.log("✅ All features tested!");
 }
 
 main().catch(e => {

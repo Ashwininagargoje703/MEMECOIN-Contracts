@@ -4,7 +4,9 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
+import "./interfaces/IUniswapV2Factory.sol";
+import "./interfaces/IUniswapV2Router02.sol";
+
 
 /// @title Buyback & Burn Module
 /// @notice Swaps incoming ETH for tokens on Uniswap V2 then burns them
