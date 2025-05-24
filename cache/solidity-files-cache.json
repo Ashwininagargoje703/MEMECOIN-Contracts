@@ -249,8 +249,8 @@
       ]
     },
     "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\contracts\\MemeCoinFactory.sol": {
-      "lastModificationDate": 1748079015460,
-      "contentHash": "b2f62291c24fdf4870bb0664e7352106",
+      "lastModificationDate": 1748091728478,
+      "contentHash": "1fffc3a1a90a82d364f272448e894859",
       "sourceName": "contracts/MemeCoinFactory.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -348,8 +348,8 @@
       ]
     },
     "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\contracts\\WhitelistPresale.sol": {
-      "lastModificationDate": 1747828630357,
-      "contentHash": "90e5133164fc4b2c39d15df102cdacc6",
+      "lastModificationDate": 1748089800253,
+      "contentHash": "d94386b51e180ba8905a6b819aabd7db",
       "sourceName": "contracts/WhitelistPresale.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -477,46 +477,6 @@
         "ABDKMath64x64"
       ]
     },
-    "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@openzeppelin\\contracts\\utils\\Context.sol": {
-      "lastModificationDate": 1747490490026,
-      "contentHash": "f07feb4a44b1a4872370da5aa70e8e46",
-      "sourceName": "@openzeppelin/contracts/utils/Context.sol",
-      "solcConfig": {
-        "version": "0.8.20",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "viaIR": true,
-          "metadata": {
-            "bytecodeHash": "none"
-          },
-          "evmVersion": "paris",
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "Context"
-      ]
-    },
     "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@openzeppelin\\contracts\\access\\AccessControl.sol": {
       "lastModificationDate": 1747490490017,
       "contentHash": "a2b1ec38a8dad325a596f926890772b8",
@@ -562,10 +522,10 @@
         "AccessControl"
       ]
     },
-    "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@openzeppelin\\contracts\\security\\Pausable.sol": {
-      "lastModificationDate": 1747490490134,
-      "contentHash": "25c8108f36fdd472bc78d4c4af240c11",
-      "sourceName": "@openzeppelin/contracts/security/Pausable.sol",
+    "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@openzeppelin\\contracts\\utils\\Context.sol": {
+      "lastModificationDate": 1747490490026,
+      "contentHash": "f07feb4a44b1a4872370da5aa70e8e46",
+      "sourceName": "@openzeppelin/contracts/utils/Context.sol",
       "solcConfig": {
         "version": "0.8.20",
         "settings": {
@@ -594,14 +554,12 @@
           }
         }
       },
-      "imports": [
-        "../utils/Context.sol"
-      ],
+      "imports": [],
       "versionPragmas": [
         "^0.8.0"
       ],
       "artifacts": [
-        "Pausable"
+        "Context"
       ]
     },
     "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@openzeppelin\\contracts\\security\\ReentrancyGuard.sol": {
@@ -642,6 +600,48 @@
       ],
       "artifacts": [
         "ReentrancyGuard"
+      ]
+    },
+    "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@openzeppelin\\contracts\\security\\Pausable.sol": {
+      "lastModificationDate": 1747490490134,
+      "contentHash": "25c8108f36fdd472bc78d4c4af240c11",
+      "sourceName": "@openzeppelin/contracts/security/Pausable.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../utils/Context.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "Pausable"
       ]
     },
     "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@uniswap\\v2-core\\contracts\\interfaces\\IUniswapV2Factory.sol": {
@@ -1731,46 +1731,6 @@
         "PoolAddress"
       ]
     },
-    "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@uniswap\\v3-periphery\\contracts\\interfaces\\IPeripheryImmutableState.sol": {
-      "lastModificationDate": 1747487869135,
-      "contentHash": "e68917661480772223d87a606afb29cd",
-      "sourceName": "@uniswap/v3-periphery/contracts/interfaces/IPeripheryImmutableState.sol",
-      "solcConfig": {
-        "version": "0.8.20",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "viaIR": true,
-          "metadata": {
-            "bytecodeHash": "none"
-          },
-          "evmVersion": "paris",
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        ">=0.5.0"
-      ],
-      "artifacts": [
-        "IPeripheryImmutableState"
-      ]
-    },
     "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@uniswap\\v3-periphery\\contracts\\interfaces\\IPoolInitializer.sol": {
       "lastModificationDate": 1747487869226,
       "contentHash": "11600b3ed90d17aa07e53a77430a6d6c",
@@ -1891,6 +1851,46 @@
       ],
       "artifacts": [
         "IPeripheryPayments"
+      ]
+    },
+    "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@uniswap\\v3-periphery\\contracts\\interfaces\\IPeripheryImmutableState.sol": {
+      "lastModificationDate": 1747487869135,
+      "contentHash": "e68917661480772223d87a606afb29cd",
+      "sourceName": "@uniswap/v3-periphery/contracts/interfaces/IPeripheryImmutableState.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.5.0"
+      ],
+      "artifacts": [
+        "IPeripheryImmutableState"
       ]
     },
     "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@openzeppelin\\contracts\\token\\ERC721\\extensions\\IERC721Metadata.sol": {
@@ -2326,46 +2326,6 @@
         "IGovernor"
       ]
     },
-    "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@openzeppelin\\contracts\\interfaces\\IERC6372.sol": {
-      "lastModificationDate": 1747490490118,
-      "contentHash": "f9153597c0095dfaa672b15968161166",
-      "sourceName": "@openzeppelin/contracts/interfaces/IERC6372.sol",
-      "solcConfig": {
-        "version": "0.8.20",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "viaIR": true,
-          "metadata": {
-            "bytecodeHash": "none"
-          },
-          "evmVersion": "paris",
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "IERC6372"
-      ]
-    },
     "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@openzeppelin\\contracts\\interfaces\\IERC165.sol": {
       "lastModificationDate": 1747490490104,
       "contentHash": "ee9624272968c23d93d4c2e39f06e6e2",
@@ -2405,6 +2365,46 @@
         "^0.8.0"
       ],
       "artifacts": []
+    },
+    "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@openzeppelin\\contracts\\interfaces\\IERC6372.sol": {
+      "lastModificationDate": 1747490490118,
+      "contentHash": "f9153597c0095dfaa672b15968161166",
+      "sourceName": "@openzeppelin/contracts/interfaces/IERC6372.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IERC6372"
+      ]
     },
     "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@openzeppelin\\contracts\\governance\\extensions\\GovernorCountingSimple.sol": {
       "lastModificationDate": 1747490490087,
@@ -2494,50 +2494,6 @@
         "GovernorContract"
       ]
     },
-    "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@openzeppelin\\contracts\\governance\\extensions\\GovernorTimelockControl.sol": {
-      "lastModificationDate": 1747490490089,
-      "contentHash": "aac379f435298e7d59ade3da436dbcf5",
-      "sourceName": "@openzeppelin/contracts/governance/extensions/GovernorTimelockControl.sol",
-      "solcConfig": {
-        "version": "0.8.20",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "viaIR": true,
-          "metadata": {
-            "bytecodeHash": "none"
-          },
-          "evmVersion": "paris",
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [
-        "./IGovernorTimelock.sol",
-        "../Governor.sol",
-        "../TimelockController.sol"
-      ],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "GovernorTimelockControl"
-      ]
-    },
     "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@openzeppelin\\contracts\\governance\\extensions\\GovernorSettings.sol": {
       "lastModificationDate": 1747490490087,
       "contentHash": "80ac7eb356eca556a3023dc3848fb40a",
@@ -2623,10 +2579,10 @@
         "GovernorVotes"
       ]
     },
-    "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@openzeppelin\\contracts\\governance\\extensions\\IGovernorTimelock.sol": {
-      "lastModificationDate": 1747490490129,
-      "contentHash": "eebb17e144c4fd58549d815db19552da",
-      "sourceName": "@openzeppelin/contracts/governance/extensions/IGovernorTimelock.sol",
+    "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@openzeppelin\\contracts\\governance\\extensions\\GovernorTimelockControl.sol": {
+      "lastModificationDate": 1747490490089,
+      "contentHash": "aac379f435298e7d59ade3da436dbcf5",
+      "sourceName": "@openzeppelin/contracts/governance/extensions/GovernorTimelockControl.sol",
       "solcConfig": {
         "version": "0.8.20",
         "settings": {
@@ -2656,13 +2612,15 @@
         }
       },
       "imports": [
-        "../IGovernor.sol"
+        "./IGovernorTimelock.sol",
+        "../Governor.sol",
+        "../TimelockController.sol"
       ],
       "versionPragmas": [
         "^0.8.0"
       ],
       "artifacts": [
-        "IGovernorTimelock"
+        "GovernorTimelockControl"
       ]
     },
     "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@openzeppelin\\contracts\\interfaces\\IERC5805.sol": {
@@ -2746,6 +2704,48 @@
       ],
       "artifacts": [
         "IVotes"
+      ]
+    },
+    "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@openzeppelin\\contracts\\governance\\extensions\\IGovernorTimelock.sol": {
+      "lastModificationDate": 1747490490129,
+      "contentHash": "eebb17e144c4fd58549d815db19552da",
+      "sourceName": "@openzeppelin/contracts/governance/extensions/IGovernorTimelock.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "../IGovernor.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IGovernorTimelock"
       ]
     },
     "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\contracts\\RewardToken.sol": {
@@ -3085,46 +3085,6 @@
         "IUniswapV2Pair"
       ]
     },
-    "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@uniswap\\v2-core\\contracts\\interfaces\\IERC20.sol": {
-      "lastModificationDate": 1747487868236,
-      "contentHash": "3d2b948a9266ee66b6e739de97c7e6e9",
-      "sourceName": "@uniswap/v2-core/contracts/interfaces/IERC20.sol",
-      "solcConfig": {
-        "version": "0.8.20",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "viaIR": true,
-          "metadata": {
-            "bytecodeHash": "none"
-          },
-          "evmVersion": "paris",
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        ">=0.5.0"
-      ],
-      "artifacts": [
-        "IERC20"
-      ]
-    },
     "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@uniswap\\v2-core\\contracts\\interfaces\\IUniswapV2Callee.sol": {
       "lastModificationDate": 1747487868245,
       "contentHash": "30a4aed15b3fa3ce5588118b7cecfa7f",
@@ -3165,6 +3125,46 @@
         "IUniswapV2Callee"
       ]
     },
+    "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@uniswap\\v2-core\\contracts\\interfaces\\IERC20.sol": {
+      "lastModificationDate": 1747487868236,
+      "contentHash": "3d2b948a9266ee66b6e739de97c7e6e9",
+      "sourceName": "@uniswap/v2-core/contracts/interfaces/IERC20.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.5.0"
+      ],
+      "artifacts": [
+        "IERC20"
+      ]
+    },
     "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@uniswap\\v2-core\\contracts\\interfaces\\IUniswapV2ERC20.sol": {
       "lastModificationDate": 1747487868258,
       "contentHash": "752c725168e1a5b73a8209897f18c5b9",
@@ -3203,6 +3203,46 @@
       ],
       "artifacts": [
         "IUniswapV2ERC20"
+      ]
+    },
+    "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@uniswap\\v2-periphery\\contracts\\interfaces\\IWETH.sol": {
+      "lastModificationDate": 1747487869913,
+      "contentHash": "270f2c1a1f22475259d5a2f6a524f72e",
+      "sourceName": "@uniswap/v2-periphery/contracts/interfaces/IWETH.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "metadata": {
+            "bytecodeHash": "none"
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.5.0"
+      ],
+      "artifacts": [
+        "IWETH"
       ]
     },
     "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@uniswap\\v2-periphery\\contracts\\interfaces\\IERC20.sol": {
@@ -3283,46 +3323,6 @@
       ],
       "artifacts": [
         "TransferHelper"
-      ]
-    },
-    "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@uniswap\\v2-periphery\\contracts\\interfaces\\IWETH.sol": {
-      "lastModificationDate": 1747487869913,
-      "contentHash": "270f2c1a1f22475259d5a2f6a524f72e",
-      "sourceName": "@uniswap/v2-periphery/contracts/interfaces/IWETH.sol",
-      "solcConfig": {
-        "version": "0.8.20",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "viaIR": true,
-          "metadata": {
-            "bytecodeHash": "none"
-          },
-          "evmVersion": "paris",
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        ">=0.5.0"
-      ],
-      "artifacts": [
-        "IWETH"
       ]
     },
     "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\contracts\\BridgeAdapter.sol": {
@@ -3691,41 +3691,6 @@
         "UniswapV2Router02"
       ]
     },
-    "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@uniswap\\v2-periphery\\contracts\\libraries\\SafeMath.sol": {
-      "lastModificationDate": 1747487869932,
-      "contentHash": "9f77127a0e2c55c2058453327e84bde3",
-      "sourceName": "@uniswap/v2-periphery/contracts/libraries/SafeMath.sol",
-      "solcConfig": {
-        "version": "0.6.6",
-        "settings": {
-          "optimizer": {
-            "enabled": false,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "=0.6.6"
-      ],
-      "artifacts": [
-        "SafeMath"
-      ]
-    },
     "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@uniswap\\v2-periphery\\contracts\\libraries\\UniswapV2Library.sol": {
       "lastModificationDate": 1747487869956,
       "contentHash": "b545c97573c8aa5876a4f9e25f28a732",
@@ -3762,6 +3727,41 @@
       ],
       "artifacts": [
         "UniswapV2Library"
+      ]
+    },
+    "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\node_modules\\@uniswap\\v2-periphery\\contracts\\libraries\\SafeMath.sol": {
+      "lastModificationDate": 1747487869932,
+      "contentHash": "9f77127a0e2c55c2058453327e84bde3",
+      "sourceName": "@uniswap/v2-periphery/contracts/libraries/SafeMath.sol",
+      "solcConfig": {
+        "version": "0.6.6",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "=0.6.6"
+      ],
+      "artifacts": [
+        "SafeMath"
       ]
     },
     "D:\\NFT-MarketPlace\\Contracts\\my-meme-launcher\\contracts\\UniswapV2RouterShim.sol": {

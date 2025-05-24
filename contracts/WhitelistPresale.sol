@@ -38,7 +38,7 @@ contract WhitelistPresale is AccessControl, ReentrancyGuard {
         address token,
         address[] calldata users
     ) external onlyRole(OPERATOR_ROLE) {
-        for (uint i; i < users.length; ) {
+        for (uint i = 0; i < users.length; ) {
             isWhitelisted[token][users[i]] = true;
             emit UserWhitelisted(token, users[i]);
             unchecked {
@@ -50,8 +50,8 @@ contract WhitelistPresale is AccessControl, ReentrancyGuard {
     function buyPresale(
         address token,
         uint256 amountAtomic,
-        uint256, // maxAlloc
-        address referrer,
+        uint256 /* maxAlloc */,
+        address /* referrer */, // referral not used here
         bytes32[] calldata proof
     ) external payable nonReentrant {
         bool ok = isWhitelisted[token][msg.sender] ||
@@ -62,11 +62,10 @@ contract WhitelistPresale is AccessControl, ReentrancyGuard {
             );
         require(ok, "Not eligible");
 
-        // 1) Forward ETH into factory.buyToken,
-        //    it transfers amountAtomic to this contract
-        factory.buyToken{value: msg.value}(token, amountAtomic, referrer);
+        // 1) Forward ETH into factory.buyToken with default referral and no slippage
+        factory.buyToken{value: msg.value}(token, amountAtomic, bytes32(0), 0);
 
-        // 2) Directly transfer from this contract to buyer
+        // 2) Directly transfer tokens from factory to buyer
         IERC20(token).transfer(msg.sender, amountAtomic);
 
         emit PresalePurchase(token, msg.sender, amountAtomic, msg.value);

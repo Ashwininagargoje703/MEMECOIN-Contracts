@@ -1,9 +1,9 @@
 // scripts/run-all.js
-const { ethers } = require("hardhat");
+const { ethers, network } = require("hardhat");
 
 async function deployUniswapV2() {
-  const WETH9   = await ethers.getContractFactory("WETH9");
-  const weth    = await WETH9.deploy();
+  const WETH9 = await ethers.getContractFactory("WETH9");
+  const weth = await WETH9.deploy();
   await weth.deployed();
   console.log("WETH9 deployed to:", weth.address);
 
@@ -12,187 +12,288 @@ async function deployUniswapV2() {
   await factory.deployed();
   console.log("UniswapFactory:", factory.address);
 
-  const Router  = await ethers.getContractFactory("UniswapV2Router02");
-  const router  = await Router.deploy(factory.address, weth.address);
+  const Router = await ethers.getContractFactory("UniswapV2Router02");
+  const router = await Router.deploy(factory.address, weth.address);
   await router.deployed();
   console.log("Router:", router.address);
 
   return { weth, factory, router };
 }
 
+async function testAnalytics(memeFactory, tokenAddr, deployer, alice) {
+  console.log("\n=== Analytics Hooks ===");
+  try {
+    await memeFactory.releaseVault(tokenAddr);
+    console.log("✔ VaultReleasedManual");
+  } catch (e) {
+    console.log("✖ Vault release:", e.reason || e.message);
+  }
+  try {
+    await memeFactory.connect(alice).claimVault(tokenAddr);
+    console.log("✔ VaultClaimed");
+  } catch (e) {
+    console.log("• Vault claim:", e.reason || e.message);
+  }
+  try {
+    const [evt] = await memeFactory.queryFilter(
+      memeFactory.filters.VestingCreated()
+    );
+    if (evt) {
+      const vesting = await ethers.getContractAt(
+        "SimpleVesting",
+        evt.args.vestingContract
+      );
+      await vesting.release();
+      console.log("✔ VestingReleased");
+    } else {
+      console.log("• No vesting contract");
+    }
+  } catch (e) {
+    console.log("✖ Vesting release:", e.reason || e.message);
+  }
+  console.log("=== Done Analytics ===\n");
+}
+
+async function testPoolFlows(memeFactory, tokenAddr, deployer, router, weth) {
+  console.log("\n=== Pool Flows ===");
+  let pair;
+  try {
+    const factoryAddr = await memeFactory.v2Factory();
+    const uniFactory = await ethers.getContractAt(
+      "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol:IUniswapV2Factory",
+      factoryAddr
+    );
+    const before = await uniFactory.getPair(tokenAddr, weth.address);
+    console.log("Pair before:", before);
+
+    await memeFactory.createV2Pool(tokenAddr, weth.address, {
+      value: await memeFactory.POOL_CREATION_FEE(),
+    });
+    pair = await uniFactory.getPair(tokenAddr, weth.address);
+    console.log("Pair after create:", pair);
+  } catch (e) {
+    console.log("✖ Pool creation:", e.reason || e.message);
+  }
+
+  try {
+    if (!pair) throw new Error("No pair address");
+    const token = await ethers.getContractAt(
+      "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20",
+      tokenAddr
+    );
+    const amtToken = ethers.utils.parseEther("10");
+    const amtETH = ethers.utils.parseEther("1");
+    await token.approve(router.address, amtToken);
+    console.log("✔ Approved tokens");
+
+    const { timestamp } = await ethers.provider.getBlock("latest");
+    const deadline = timestamp + 600;
+
+    await router.addLiquidityETH(
+      tokenAddr,
+      amtToken,
+      0,
+      0,
+      deployer.address,
+      deadline,
+      { value: amtETH }
+    );
+    console.log("✔ Liquidity added");
+  } catch (e) {
+    console.log("✖ addLiquidityETH:", e.reason || e.message);
+  }
+
+  try {
+    if (!pair) throw new Error("No pair address");
+    const pairC = await ethers.getContractAt(
+      "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol:IUniswapV2Pair",
+      pair
+    );
+    const lpBal = await pairC.balanceOf(deployer.address);
+    console.log("LP balance:", lpBal.toString());
+
+    await pairC.approve(router.address, lpBal);
+    console.log("✔ Approved LP tokens");
+
+    const { timestamp: ts2 } = await ethers.provider.getBlock("latest");
+    const deadline2 = ts2 + 600;
+
+    await router.removeLiquidityETH(
+      tokenAddr,
+      lpBal,
+      0,
+      0,
+      deployer.address,
+      deadline2
+    );
+    console.log("✔ Liquidity removed");
+  } catch (e) {
+    console.log("✖ removeLiquidityETH:", e.reason || e.message);
+  }
+
+  console.log("=== Done Pool Flows ===\n");
+}
+
+async function testNewFeatures(memeFactory, tokenAddr, deployer, alice) {
+  console.log("\n=== New Features Test ===");
+
+  // 1) register a referral code
+  const code = ethers.utils.formatBytes32String("REF123");
+  await memeFactory.connect(deployer).registerReferralCode(code);
+  console.log("✔ Referral code registered:", code);
+
+  // 2) buyToken with referral code & slippage guard
+  const one = ethers.utils.parseEther("0.5");
+  const cost = await memeFactory.costToBuy(tokenAddr, one);
+  await memeFactory.connect(alice).buyToken(
+    tokenAddr,
+    one,
+    code,
+    cost,
+    { value: cost } // <–– pass the Eth!
+  );
+  console.log("✔ buyToken with referral succeeded");
+
+  // 3) update audit report URI
+  const auditURI = "ipfs://QmAuditReportHash";
+  await memeFactory.connect(deployer).updateAuditReport(auditURI);
+  console.log("✔ Audit report updated:", await memeFactory.auditReportURI());
+
+  console.log("=== Done New Features Test ===\n");
+}
+
 async function main() {
   const [deployer, alice] = await ethers.getSigners();
 
-  // 1) Deploy local Uniswap V2
+  // 1) Deploy Uniswap V2
   const { weth, factory: uniFactory, router } = await deployUniswapV2();
 
   // 2) Deploy MemeCoinFactory
-  const platformFeeBP = 200;  // 2%
-  const referralFeeBP = 50;   // 0.5%
-  const MemeCoinFactory = await ethers.getContractFactory("MemeCoinFactory");
-  const memeFactory = await MemeCoinFactory.deploy(
-    platformFeeBP,
-    referralFeeBP,
+  const Factory = await ethers.getContractFactory("MemeCoinFactory");
+  const memeFactory = await Factory.deploy(
+    200,
+    50,
     uniFactory.address,
     router.address
   );
   await memeFactory.deployed();
   console.log("MemeCoinFactory:", memeFactory.address);
 
-  // 3) createMemeCoin parameters
-  const now         = (await ethers.provider.getBlock()).timestamp;
-  const params = {
-    name:        "DemoToken",
-    symbol:      "DMT",
-    launchMode:  0,
-    preMintCap:  1_000_000,
-    curveType:   0,
-    basePrice:   ethers.utils.parseEther("0.01"),
-    slope:       ethers.utils.parseEther("0.005"),
-    exponent:    0,
-    stepSize:    1,
-    fundingGoal: ethers.utils.parseEther("0.05"),
-    startFeeBP:  100,
-    endFeeBP:    300,
-    feeStart:    now,
-    feeEnd:      now + 3600,
-    vaultEnd:    0,
-    vestAmount:  ethers.utils.parseEther("1000"),
-    vestStart:   now + 60,
-    vestDur:     86400,
-    totalSupply: ethers.utils.parseEther("1000000"),
-    ipfsHash:    "QmYourIpfsHashHere"
-  };
-
-  // 4) createMemeCoin
-  const txCreate = await memeFactory.createMemeCoin(
-    params.name,
-    params.symbol,
-    params.launchMode,
-    params.preMintCap,
-    params.curveType,
-    params.basePrice,
-    params.slope,
-    params.exponent,
-    params.stepSize,
-    params.fundingGoal,
-    params.startFeeBP,
-    params.endFeeBP,
-    params.feeStart,
-    params.feeEnd,
-    params.vaultEnd,
-    params.vestAmount,
-    params.vestStart,
-    params.vestDur,
-    params.totalSupply,
-    params.ipfsHash
+  // 3) Launch token w/ 2-min vault
+  const now = (await ethers.provider.getBlock()).timestamp;
+  const vaultWindow = 120;
+  const tx = await memeFactory.createMemeCoin(
+    "DemoToken",
+    "DMT",
+    0,
+    1_000_000,
+    0,
+    ethers.utils.parseEther("0.01"),
+    ethers.utils.parseEther("0.005"),
+    0,
+    1,
+    ethers.utils.parseEther("0.05"),
+    100,
+    300,
+    now,
+    now + 3600,
+    now + vaultWindow,
+    ethers.utils.parseEther("0.001"),
+    now + 10,
+    60,
+    ethers.utils.parseEther("1000000"),
+    "QmYourIpfsHashHere"
   );
-  const receipt   = await txCreate.wait();
-  const tokenAddr = receipt.events.find(e => e.event === "TokenCreated").args.token;
-  console.log("Demo Token:", tokenAddr);
+  const rec = await tx.wait();
+  const tokenAddr = rec.events.find((e) => e.event === "TokenCreated").args
+    .token;
+  console.log("Token:", tokenAddr);
 
-  // 5) BUY 1 token (auto‐pool)
-  const one         = ethers.utils.parseEther("1");
-  const costToBuy1  = await memeFactory.costToBuy(tokenAddr, one);
-  console.log(`\n⏳ Buying 1 token for ${ethers.utils.formatEther(costToBuy1)} ETH…`);
-  await memeFactory.connect(alice).buyToken(tokenAddr, one, ethers.constants.AddressZero, { value: costToBuy1 });
-  console.log("✅ Bought 1 token");
+  // 4) Vault deposit
+  await memeFactory.connect(alice).depositVault(tokenAddr, {
+    value: ethers.utils.parseEther("0.02"),
+  });
+  console.log("Vault deposit done.");
 
-  // 6) Inspect auto-pool pair
-  const pair = await uniFactory.getPair(tokenAddr, weth.address);
-  console.log("Auto-pool pair:", pair);
+  // 5) Fast-forward
+  await ethers.provider.send("evm_increaseTime", [vaultWindow + 1]);
+  await ethers.provider.send("evm_mine");
+  console.log("⏱ Fast-forwarded");
 
-  // 7) Check Alice’s balance
-  const token   = await ethers.getContractAt(
+  // 6) Buy & Sell (with ETH passed!)
+  const oneCost = await memeFactory.costToBuy(
+    tokenAddr,
+    ethers.utils.parseEther("1")
+  );
+  await memeFactory
+    .connect(alice)
+    .buyToken(
+      tokenAddr,
+      ethers.utils.parseEther("1"),
+      ethers.constants.HashZero,
+      oneCost,
+      { value: oneCost }
+    );
+  console.log("Bought 1 token");
+
+  const tokenContract = await ethers.getContractAt(
     "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20",
     tokenAddr
   );
-  let aliceBal  = await token.balanceOf(alice.address);
-  console.log("Alice token balance:", ethers.utils.formatUnits(aliceBal, 18));
+  await tokenContract
+    .connect(alice)
+    .approve(memeFactory.address, ethers.utils.parseEther("1"));
+  await memeFactory
+    .connect(alice)
+    .sellToken(tokenAddr, ethers.utils.parseEther("1"), 0);
+  console.log("Sold 1 token");
 
-  // 8) SELL 1 token
-  console.log("\n⏳ Selling 1 token back…");
-  await token.connect(alice).approve(memeFactory.address, one);
-  await memeFactory.connect(alice).sellToken(tokenAddr, one);
-  console.log("✅ Sold 1 token");
-
-  // 9) Final balances & fee accruals
-  aliceBal        = await token.balanceOf(alice.address);
-  const platformFees = await memeFactory.platformFeesAccrued();
-  const creatorFees  = await memeFactory.creatorFeesAccrued(deployer.address);
-  console.log("Alice balance after sell:", ethers.utils.formatUnits(aliceBal, 18));
-  console.log("Platform fees accrued:", ethers.utils.formatEther(platformFees));
-  console.log("Creator fees accrued: ", ethers.utils.formatEther(creatorFees));
-
-  // 10) Fund factory so withdraws can succeed
-  const totalToFund = platformFees.add(creatorFees);
-  console.log(`\n⏳ Funding factory with ${ethers.utils.formatEther(totalToFund)} ETH…`);
-  await deployer.sendTransaction({ to: memeFactory.address, value: totalToFund });
-
-  // 11) Withdraw creator & platform fees
+  // 7) Withdraw fees
+  const pFees = await memeFactory.platformFeesAccrued();
+  const cFees = await memeFactory.creatorFeesAccrued(deployer.address);
+  await deployer.sendTransaction({
+    to: memeFactory.address,
+    value: pFees.add(cFees),
+  });
   await memeFactory.withdrawCreatorFees();
   await memeFactory.withdrawPlatformFees(deployer.address);
-  console.log("✅ Withdrawals complete");
+  console.log("Fees withdrawn");
 
-  // ── READ-VIEW FUNCTIONS ───────────────────────────────────────
-  console.log("\n=== READ-VIEW FUNCTIONS ===");
-  console.log("platformFeeBP:", (await memeFactory.platformFeeBP()).toString());
-  console.log("referralFeeBP:", (await memeFactory.referralFeeBP()).toString());
-  console.log("POOL_CREATION_FEE:", ethers.utils.formatEther(await memeFactory.POOL_CREATION_FEE()), "ETH");
-  console.log("v2Factory:", await memeFactory.v2Factory());
-  console.log("router:", await memeFactory.router());
-  console.log("WETH:", await memeFactory.WETH());
+  // 8) Fund factory for gas
+  await deployer.sendTransaction({
+    to: memeFactory.address,
+    value: ethers.utils.parseEther("0.1"),
+  });
+  console.log("Factory funded with ETH for gas");
 
-  // TokenInfo[0]
-  const t0 = await memeFactory.allTokens(0);
-  console.log("allTokens[0]:", {
-    token: t0.token,
-    creator: t0.creator,
-    launchMode: t0.launchMode.toString(),
-    preMintCap: t0.preMintCap.toString(),
-    active: t0.active,
-    vaultEnd: t0.vaultEnd.toString()
+  // 9) Impersonate factory & top up deployer
+  await network.provider.request({
+    method: "hardhat_impersonateAccount",
+    params: [memeFactory.address],
+  });
+  const factorySigner = await ethers.getSigner(memeFactory.address);
+  await tokenContract
+    .connect(factorySigner)
+    .transfer(deployer.address, ethers.utils.parseEther("10"));
+  console.log("Tokens transferred to deployer");
+  await network.provider.request({
+    method: "hardhat_stopImpersonatingAccount",
+    params: [memeFactory.address],
   });
 
-  console.log("tokenIndexPlusOne:", (await memeFactory.tokenIndexPlusOne(tokenAddr)).toString());
+  // 10) Test new UX features
+  await testNewFeatures(memeFactory, tokenAddr, deployer, alice);
 
-  // CurveInfo for our token
-  const c = await memeFactory.curves(tokenAddr);
-  console.log("curves[token]:", {
-    curveType:      c.curveType.toString(),
-    basePrice:      ethers.utils.formatEther(c.basePrice),
-    slope:          ethers.utils.formatEther(c.slope),
-    exponent:       c.exponent.toString(),
-    stepSize:       c.stepSize.toString(),
-    totalSold:      c.totalSold.toString(),
-    fundingGoal:    ethers.utils.formatEther(c.fundingGoal),
-    poolCreated:    c.poolCreated,
-    startFeeBP:     c.startFeeBP.toString(),
-    endFeeBP:       c.endFeeBP.toString(),
-    feeChangeStart: c.feeChangeStart.toString(),
-    feeChangeEnd:   c.feeChangeEnd.toString()
-  });
+  // 11) Pool flows + analytics
+  await testPoolFlows(memeFactory, tokenAddr, deployer, router, weth);
+  await testAnalytics(memeFactory, tokenAddr, deployer, alice);
 
-  // Vaults
-  console.log("vaultDeposits(alice):", (await memeFactory.vaultDeposits(tokenAddr, alice.address)).toString());
-  console.log("vaultTotal:", (await memeFactory.vaultTotal(tokenAddr)).toString());
-  console.log("vaultReleased:", await memeFactory.vaultReleased(tokenAddr));
-
-  // Modules
-  console.log("whitelistModule:", await memeFactory.whitelistModule());
-  console.log("stakingModule:", await memeFactory.stakingModule());
-  console.log("airdropModule:", await memeFactory.airdropModule());
-
-  // Pricing helpers
-  console.log("currentPrice:", ethers.utils.formatEther(await memeFactory.currentPrice(tokenAddr)), "ETH");
-  console.log("costToBuy(5):", ethers.utils.formatEther(await memeFactory.costToBuy(tokenAddr, ethers.utils.parseEther("5"))), "ETH");
-
-  console.log("\n🎉 All read/view calls complete!");
+  console.log("🎉 All done!");
 }
 
 main()
   .then(() => process.exit(0))
-  .catch(err => {
+  .catch((err) => {
     console.error(err);
     process.exit(1);
   });
