@@ -21,7 +21,7 @@ module.exports = {
         settings: {
           optimizer: { enabled: true, runs: 200 },
           viaIR: true,
-          metadata: { bytecodeHash: "none" }
+             metadata: { bytecodeHash: "none" }        // ← strip the metadata hash
         }
       },
       { version: "0.6.6" },   // for UniswapV2Router02

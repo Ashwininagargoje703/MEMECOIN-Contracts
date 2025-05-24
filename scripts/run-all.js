@@ -1,167 +1,198 @@
 // scripts/run-all.js
-// ──────────────────────────────
-// Usage: npx hardhat run scripts/run-all.js [--network <network>]
+const { ethers } = require("hardhat");
 
-require("dotenv").config();
-const hre = require("hardhat");
-const { ethers, network } = hre;
-
-async function main() {
-  console.log("⛓ Running on network:", network.name,"\n");
-
-  const [deployer] = await ethers.getSigners();
-  console.log("1) Deployer:", deployer.address,"\n");
-
-  // 2) Deploy WETH9
-  console.log("2) Deploying WETH9…");
-  const WETH9 = await ethers.getContractFactory("WETH9");
-  const weth  = await WETH9.deploy();
+async function deployUniswapV2() {
+  const WETH9   = await ethers.getContractFactory("WETH9");
+  const weth    = await WETH9.deploy();
   await weth.deployed();
-  console.log("   ↳", weth.address,"\n");
+  console.log("WETH9 deployed to:", weth.address);
 
-  // 3) Deploy UniswapV2Factory
-  console.log("3) Deploying UniswapV2Factory…");
-  const UV2F = await ethers.getContractFactory(
-    "@uniswap/v2-core/contracts/UniswapV2Factory.sol:UniswapV2Factory"
-  );
-  const uniFactory = await UV2F.deploy(deployer.address);
-  await uniFactory.deployed();
-  console.log("   ↳", uniFactory.address,"\n");
-
-  // 4) Attach Router
-  console.log("4) Attaching Router…");
-  const ROUTER = process.env.UNISWAP_V2_ROUTER ||
-    "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
-  const router = await ethers.getContractAt(
-    "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol:IUniswapV2Router02",
-    ROUTER
-  );
-  console.log("   ↳", ROUTER,"\n");
-
-  // 5) Deploy MemeCoinFactory (V2-only)
-  console.log("5) Deploying MemeCoinFactory…");
-  const MCF = await ethers.getContractFactory("MemeCoinFactory");
-  const factory = await MCF.deploy(
-    ethers.constants.AddressZero,         // forwarder
-    200,                                  // platformFeeBP = 2%
-    100,                                  // referralFeeBP = 1%
-    ethers.utils.parseEther("0.01"),      // basePrice
-    ethers.utils.parseEther("0.000001"),  // slope
-    uniFactory.address                    // UniswapV2Factory
-  );
+  const Factory = await ethers.getContractFactory("UniswapV2Factory");
+  const factory = await Factory.deploy((await ethers.getSigners())[0].address);
   await factory.deployed();
-  console.log("   ↳", factory.address,"\n");
+  console.log("UniswapFactory:", factory.address);
 
-  // 6) Deploy & wire WhitelistPresale
-  console.log("6) Deploying WhitelistPresale…");
-  const WP = await ethers.getContractFactory("WhitelistPresale");
-  const presale = await WP.deploy(factory.address);
-  await presale.deployed();
-  await factory.setWhitelistModule(presale.address);
-  console.log("   ↳", presale.address,"\n");
+  const Router  = await ethers.getContractFactory("UniswapV2Router02");
+  const router  = await Router.deploy(factory.address, weth.address);
+  await router.deployed();
+  console.log("Router:", router.address);
 
-  // 7) Mint DemoToken
-  console.log("7) Minting DemoToken…");
-  const SUPPLY = ethers.utils.parseUnits("1000", 18);
-  const txMint = await factory.createMemeCoin(
-    "DemoToken","DMT","Demo token",
-    SUPPLY,
-    ethers.utils.parseEther("0.01"),
-    "QmTestHash"
-  );
-  const rcMint = await txMint.wait();
-  const tokenAddr = rcMint.events.find(e=>e.event==="TokenCreated").args.token;
-  console.log("   ↳ Token at", tokenAddr,"\n");
-  const token = await ethers.getContractAt("MemeCoin", tokenAddr);
-
-  // 8) Whitelist EOA for presale (and wait for it!)
-  console.log("8) Whitelisting for presale…");
-  const txWL = await presale.whitelistUsers(tokenAddr, [deployer.address]);
-  await txWL.wait();
-  console.log("   ↳ isWhitelisted:",
-    await presale.isWhitelisted(tokenAddr, deployer.address),"\n"
-  );
-
-  // 9) Buy via presale
-  console.log("9) Buying via presale…");
-  const presaleAmt   = ethers.utils.parseUnits("1", 18);
-  const presalePrice = await factory.currentPrice();
-  const txPre = await presale.buyPresale(
-    tokenAddr, presaleAmt, presaleAmt,
-    ethers.constants.AddressZero,
-    [], { value: presalePrice }
-  );
-  await txPre.wait();
-  console.log("   ↳ balance after presale:",
-    (await token.balanceOf(deployer.address)).toString(),"\n"
-  );
-
-  // 10) Bonding-curve buy of 2 tokens
-  console.log("10) Buying 2 tokens via bonding curve…");
-  const buyCount = ethers.BigNumber.from(2);
-  const baseP    = await factory.basePrice();
-  const slope    = await factory.slope();
-  const ts       = await factory.totalSold(); // currently 1
-  const term1    = baseP.mul(buyCount);
-  const term2    = slope.mul(
-    ts.mul(buyCount)
-    .add(buyCount.mul(buyCount.sub(1)).div(2))
-  );
-  const cost     = term1.add(term2);
-  console.log("    ↳ cost =", ethers.utils.formatEther(cost), "ETH");
-  const txBuy = await factory.buyToken(
-    tokenAddr,
-    buyCount.mul(ethers.constants.WeiPerEther), // 2*1e18
-    ethers.constants.AddressZero,
-    { value: cost }
-  );
-  await txBuy.wait();
-  console.log("   ↳ balance after buyToken:",
-    (await token.balanceOf(deployer.address)).toString(),"\n"
-  );
-
-  // 11) Create V2 Pool
-  console.log("11) Creating V2 pool…");
-  const txPool = await factory.createV2Pool(
-    tokenAddr, weth.address,
-    { value: ethers.utils.parseEther("0.002") }
-  );
-  const rcPool = await txPool.wait();
-  const pairAddr = rcPool.events.find(e=>e.event==="V2PairCreated").args.pair;
-  console.log("   ↳ pool at", pairAddr,"\n");
-
-  // 12) Add Liquidity
-  console.log("12) Adding liquidity 100 DMT + 1 WETH…");
-  await weth.deposit({ value: ethers.utils.parseEther("1") });
-  await token.approve(router.address, ethers.utils.parseUnits("100", 18));
-  await weth.approve(router.address, ethers.utils.parseEther("1"));
-  const deadline = Math.floor(Date.now()/1000) + 600;
-  const txAdd    = await router.addLiquidity(
-    tokenAddr, weth.address,
-    ethers.utils.parseUnits("100", 18), ethers.utils.parseEther("1"),
-    0, 0, deployer.address, deadline
-  );
-  await txAdd.wait();
-  console.log("   ↳ liquidity added\n");
-
-  // 13) Remove Liquidity
-  console.log("13) Removing liquidity…");
-  const pair = await ethers.getContractAt(
-    "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol:IUniswapV2Pair",
-    pairAddr
-  );
-  const lp     = await pair.balanceOf(deployer.address);
-  const txRm   = await router.removeLiquidity(
-    tokenAddr, weth.address,
-    lp, 0, 0, deployer.address, deadline
-  );
-  await txRm.wait();
-  console.log("   ↳ liquidity removed\n");
-
-  console.log("✅ All features tested!");
+  return { weth, factory, router };
 }
 
-main().catch(e => {
-  console.error(e);
-  process.exit(1);
-});
+async function main() {
+  const [deployer, alice] = await ethers.getSigners();
+
+  // 1) Deploy local Uniswap V2
+  const { weth, factory: uniFactory, router } = await deployUniswapV2();
+
+  // 2) Deploy MemeCoinFactory
+  const platformFeeBP = 200;  // 2%
+  const referralFeeBP = 50;   // 0.5%
+  const MemeCoinFactory = await ethers.getContractFactory("MemeCoinFactory");
+  const memeFactory = await MemeCoinFactory.deploy(
+    platformFeeBP,
+    referralFeeBP,
+    uniFactory.address,
+    router.address
+  );
+  await memeFactory.deployed();
+  console.log("MemeCoinFactory:", memeFactory.address);
+
+  // 3) createMemeCoin parameters
+  const now         = (await ethers.provider.getBlock()).timestamp;
+  const params = {
+    name:        "DemoToken",
+    symbol:      "DMT",
+    launchMode:  0,
+    preMintCap:  1_000_000,
+    curveType:   0,
+    basePrice:   ethers.utils.parseEther("0.01"),
+    slope:       ethers.utils.parseEther("0.005"),
+    exponent:    0,
+    stepSize:    1,
+    fundingGoal: ethers.utils.parseEther("0.05"),
+    startFeeBP:  100,
+    endFeeBP:    300,
+    feeStart:    now,
+    feeEnd:      now + 3600,
+    vaultEnd:    0,
+    vestAmount:  ethers.utils.parseEther("1000"),
+    vestStart:   now + 60,
+    vestDur:     86400,
+    totalSupply: ethers.utils.parseEther("1000000"),
+    ipfsHash:    "QmYourIpfsHashHere"
+  };
+
+  // 4) createMemeCoin
+  const txCreate = await memeFactory.createMemeCoin(
+    params.name,
+    params.symbol,
+    params.launchMode,
+    params.preMintCap,
+    params.curveType,
+    params.basePrice,
+    params.slope,
+    params.exponent,
+    params.stepSize,
+    params.fundingGoal,
+    params.startFeeBP,
+    params.endFeeBP,
+    params.feeStart,
+    params.feeEnd,
+    params.vaultEnd,
+    params.vestAmount,
+    params.vestStart,
+    params.vestDur,
+    params.totalSupply,
+    params.ipfsHash
+  );
+  const receipt   = await txCreate.wait();
+  const tokenAddr = receipt.events.find(e => e.event === "TokenCreated").args.token;
+  console.log("Demo Token:", tokenAddr);
+
+  // 5) BUY 1 token (auto‐pool)
+  const one         = ethers.utils.parseEther("1");
+  const costToBuy1  = await memeFactory.costToBuy(tokenAddr, one);
+  console.log(`\n⏳ Buying 1 token for ${ethers.utils.formatEther(costToBuy1)} ETH…`);
+  await memeFactory.connect(alice).buyToken(tokenAddr, one, ethers.constants.AddressZero, { value: costToBuy1 });
+  console.log("✅ Bought 1 token");
+
+  // 6) Inspect auto-pool pair
+  const pair = await uniFactory.getPair(tokenAddr, weth.address);
+  console.log("Auto-pool pair:", pair);
+
+  // 7) Check Alice’s balance
+  const token   = await ethers.getContractAt(
+    "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20",
+    tokenAddr
+  );
+  let aliceBal  = await token.balanceOf(alice.address);
+  console.log("Alice token balance:", ethers.utils.formatUnits(aliceBal, 18));
+
+  // 8) SELL 1 token
+  console.log("\n⏳ Selling 1 token back…");
+  await token.connect(alice).approve(memeFactory.address, one);
+  await memeFactory.connect(alice).sellToken(tokenAddr, one);
+  console.log("✅ Sold 1 token");
+
+  // 9) Final balances & fee accruals
+  aliceBal        = await token.balanceOf(alice.address);
+  const platformFees = await memeFactory.platformFeesAccrued();
+  const creatorFees  = await memeFactory.creatorFeesAccrued(deployer.address);
+  console.log("Alice balance after sell:", ethers.utils.formatUnits(aliceBal, 18));
+  console.log("Platform fees accrued:", ethers.utils.formatEther(platformFees));
+  console.log("Creator fees accrued: ", ethers.utils.formatEther(creatorFees));
+
+  // 10) Fund factory so withdraws can succeed
+  const totalToFund = platformFees.add(creatorFees);
+  console.log(`\n⏳ Funding factory with ${ethers.utils.formatEther(totalToFund)} ETH…`);
+  await deployer.sendTransaction({ to: memeFactory.address, value: totalToFund });
+
+  // 11) Withdraw creator & platform fees
+  await memeFactory.withdrawCreatorFees();
+  await memeFactory.withdrawPlatformFees(deployer.address);
+  console.log("✅ Withdrawals complete");
+
+  // ── READ-VIEW FUNCTIONS ───────────────────────────────────────
+  console.log("\n=== READ-VIEW FUNCTIONS ===");
+  console.log("platformFeeBP:", (await memeFactory.platformFeeBP()).toString());
+  console.log("referralFeeBP:", (await memeFactory.referralFeeBP()).toString());
+  console.log("POOL_CREATION_FEE:", ethers.utils.formatEther(await memeFactory.POOL_CREATION_FEE()), "ETH");
+  console.log("v2Factory:", await memeFactory.v2Factory());
+  console.log("router:", await memeFactory.router());
+  console.log("WETH:", await memeFactory.WETH());
+
+  // TokenInfo[0]
+  const t0 = await memeFactory.allTokens(0);
+  console.log("allTokens[0]:", {
+    token: t0.token,
+    creator: t0.creator,
+    launchMode: t0.launchMode.toString(),
+    preMintCap: t0.preMintCap.toString(),
+    active: t0.active,
+    vaultEnd: t0.vaultEnd.toString()
+  });
+
+  console.log("tokenIndexPlusOne:", (await memeFactory.tokenIndexPlusOne(tokenAddr)).toString());
+
+  // CurveInfo for our token
+  const c = await memeFactory.curves(tokenAddr);
+  console.log("curves[token]:", {
+    curveType:      c.curveType.toString(),
+    basePrice:      ethers.utils.formatEther(c.basePrice),
+    slope:          ethers.utils.formatEther(c.slope),
+    exponent:       c.exponent.toString(),
+    stepSize:       c.stepSize.toString(),
+    totalSold:      c.totalSold.toString(),
+    fundingGoal:    ethers.utils.formatEther(c.fundingGoal),
+    poolCreated:    c.poolCreated,
+    startFeeBP:     c.startFeeBP.toString(),
+    endFeeBP:       c.endFeeBP.toString(),
+    feeChangeStart: c.feeChangeStart.toString(),
+    feeChangeEnd:   c.feeChangeEnd.toString()
+  });
+
+  // Vaults
+  console.log("vaultDeposits(alice):", (await memeFactory.vaultDeposits(tokenAddr, alice.address)).toString());
+  console.log("vaultTotal:", (await memeFactory.vaultTotal(tokenAddr)).toString());
+  console.log("vaultReleased:", await memeFactory.vaultReleased(tokenAddr));
+
+  // Modules
+  console.log("whitelistModule:", await memeFactory.whitelistModule());
+  console.log("stakingModule:", await memeFactory.stakingModule());
+  console.log("airdropModule:", await memeFactory.airdropModule());
+
+  // Pricing helpers
+  console.log("currentPrice:", ethers.utils.formatEther(await memeFactory.currentPrice(tokenAddr)), "ETH");
+  console.log("costToBuy(5):", ethers.utils.formatEther(await memeFactory.costToBuy(tokenAddr, ethers.utils.parseEther("5"))), "ETH");
+
+  console.log("\n🎉 All read/view calls complete!");
+}
+
+main()
+  .then(() => process.exit(0))
+  .catch(err => {
+    console.error(err);
+    process.exit(1);
+  });
